@@ -1,0 +1,11 @@
+<ul class="list" role="list">
+
+  <li class="item" *ngFor="let report of reports">
+    <div class="meta">
+      <h3>{{ report.title }}</h3>
+      <p>{{ report.summary }}</p>
+    </div>
+
+    <button class="btn" (click)="downloadReport(report.fileName)">Download PDF</button>
+  </li>
+</ul>

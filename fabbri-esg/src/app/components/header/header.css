@@ -1,0 +1,31 @@
+.site-header {
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 12px 0;
+  background: #fff;
+  position: sticky;
+  top: 0;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: #111;
+}
+
+nav a {
+  margin-left: 12px;
+  text-decoration: none;
+  color: #222;
+}
+
+  nav a.active {
+    font-weight: 700;
+    text-decoration: underline;
+  }
