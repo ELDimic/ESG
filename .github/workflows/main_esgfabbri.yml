@@ -49,9 +49,20 @@ jobs:
       - name: Create deploy package (zip)
         shell: bash
         run: |
+          # Entra nella cartella build
           cd "${{ steps.detect.outputs.APP_BUILD_DIR }}"
-          zip -r "../../site.zip" .
-          cd ../..
+
+          # Se esiste "browser/", zippa quella (Angular builder application)
+          if [ -d "browser" ]; then
+            echo "Detected browser/ output. Zipping browser/..."
+            cd browser
+            zip -r "../../../site.zip" .
+          else
+            echo "No browser/ folder. Zipping current build folder..."
+            zip -r "../../site.zip" .
+          fi
+
+          cd ../../..
           echo "ZIP created at:"
           ls -la site.zip
 
@@ -84,3 +95,4 @@ jobs:
           app-name: esgfabbri
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: site.zip
+
