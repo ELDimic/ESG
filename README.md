@@ -64,4 +64,4 @@ Accesso all’applicazione
 
 L’applicazione è accessibile pubblicamente all’indirizzo:
 
-https://esgfabbri-erghc5fnhyana2a6.italynorth-01.azurewebsites.net/
+https://esgfabbri-erghc5fnhyana2a6.italynorth-01.azurewebsites.net/reports
