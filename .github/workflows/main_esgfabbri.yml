@@ -1,4 +1,4 @@
-name: Build and deploy Angular app to Azure Web App - ESGFabbri
+﻿name: Build and deploy Angular app to Azure Web App - ESGFabbri
 
 on:
   push:
@@ -7,13 +7,16 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: ESGFabbri          # App Service
-  NODE_VERSION: '20'                   # ok anche 18
-  AZURE_WEBAPP_PACKAGE_PATH: 'dist'    # cartella base build 
+  AZURE_WEBAPP_NAME: esgfabbri     # <-- App Service
+  NODE_VERSION: '20'
+  APP_DIR: fabbri-esg              # <-- Cartella del progetto Angular
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.APP_DIR }}   # Tutti i comandi run dentro fabbri-esg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +26,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json  # lock nella sottocartella
+
+      - name: Show files (debug)
+        run: |
+          pwd
+          ls -la
+          echo "---- lock file ----"
+          ls -la package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -30,21 +41,20 @@ jobs:
       - name: Build Angular (production)
         run: npm run build -- --configuration production
 
-      # Trova automaticamente la cartella reale dentro dist/
       - name: Detect build output folder
         id: detect
         shell: bash
         run: |
           echo "Dist content:"
           ls -la dist
-          APP_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
-          echo "APP_DIR=$APP_DIR" >> $GITHUB_OUTPUT
+          APP_BUILD_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
+          echo "APP_BUILD_DIR=$APP_BUILD_DIR" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: angular-build
-          path: ${{ steps.detect.outputs.APP_DIR }}
+          path: ${{ env.APP_DIR }}/${{ steps.detect.outputs.APP_BUILD_DIR }}
 
   deploy:
     runs-on: ubuntu-latest
