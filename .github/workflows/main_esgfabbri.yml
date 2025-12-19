@@ -7,16 +7,16 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: esgfabbri     # <-- App Service
+  AZURE_WEBAPP_NAME: esgfabbri
   NODE_VERSION: '20'
-  APP_DIR: fabbri-esg              # <-- Cartella del progetto Angular
+  APP_DIR: fabbri-esg
 
 jobs:
   build:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ env.APP_DIR }}   # Tutti i comandi run dentro fabbri-esg
+        working-directory: ${{ env.APP_DIR }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,14 +26,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json  # lock nella sottocartella
-
-      - name: Show files (debug)
-        run: |
-          pwd
-          ls -la
-          echo "---- lock file ----"
-          ls -la package-lock.json
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -49,12 +42,24 @@ jobs:
           ls -la dist
           APP_BUILD_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
           echo "APP_BUILD_DIR=$APP_BUILD_DIR" >> $GITHUB_OUTPUT
+          echo "Build dir detected: $APP_BUILD_DIR"
+          ls -la "$APP_BUILD_DIR"
+
+      # Crea uno zip con index.html in root (fondamentale per App Service/IIS)
+      - name: Create deploy package (zip)
+        shell: bash
+        run: |
+          cd "${{ steps.detect.outputs.APP_BUILD_DIR }}"
+          zip -r "../../site.zip" .
+          cd ../..
+          echo "ZIP created at:"
+          ls -la site.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: angular-build
-          path: ${{ env.APP_DIR }}/${{ steps.detect.outputs.APP_BUILD_DIR }}
+          name: site-zip
+          path: ${{ env.APP_DIR }}/site.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -63,13 +68,19 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: angular-build
-          path: site
+          name: site-zip
+          path: .
+
+      - name: Verify package contents (debug)
+        shell: bash
+        run: |
+          ls -la
+          echo "Listing zip content:"
+          unzip -l site.zip | head -n 50
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: esgfabbri
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: site
-
+          package: site.zip
