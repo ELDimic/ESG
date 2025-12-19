@@ -34,26 +34,31 @@ jobs:
       - name: Build Angular (production)
         run: npm run build -- --configuration production
 
-      - name: Detect build output folder
-        id: detect
-        shell: bash
-        run: |
-          echo "Dist content:"
-          ls -la dist
-          APP_BUILD_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
-          echo "APP_BUILD_DIR=$APP_BUILD_DIR" >> $GITHUB_OUTPUT
-          echo "Build dir detected: $APP_BUILD_DIR"
-          ls -la "$APP_BUILD_DIR"
-
-      # Crea uno zip con index.html in root (fondamentale per App Service/IIS)
+      # ✅ ZIP dalla cartella corretta: dist/fabbri-esg/browser
+      # Dentro lo zip ci saranno index.html, assets/, web.config, js/css (in root)
       - name: Create deploy package (zip)
         shell: bash
         run: |
-          cd "${{ steps.detect.outputs.APP_BUILD_DIR }}"
-          zip -r "../../site.zip" .
-          cd ../..
-          echo "ZIP created at:"
+          echo "Build output structure:"
+          ls -la dist
+          ls -la dist/fabbri-esg || true
+          ls -la dist/fabbri-esg/browser || true
+
+          if [ ! -f dist/fabbri-esg/browser/index.html ]; then
+            echo "ERROR: dist/fabbri-esg/browser/index.html not found!"
+            echo "Listing dist (maxdepth 4):"
+            find dist -maxdepth 4 -type f | head -n 200
+            exit 1
+          fi
+
+          cd dist/fabbri-esg/browser
+          zip -r ../../../site.zip .
+          cd ../../../
+
+          echo "ZIP created:"
           ls -la site.zip
+          echo "ZIP content preview:"
+          unzip -l site.zip | head -n 50
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
