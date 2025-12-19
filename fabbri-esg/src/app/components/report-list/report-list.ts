@@ -10,7 +10,9 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./report-list.css'],
 })
 export class ReportList {
+  // Lista dei report da visualizzare, fornita dal componente padre
   @Input() reports: SustainabilityReport[] = [];
+  // Evento emesso quando l'utente richiede il download di un report
   @Output() downloadRequested = new EventEmitter<number>();
 
   constructor(private reportService: ReportService) { }
@@ -22,6 +24,10 @@ export class ReportList {
   notify(year: number): void {
     this.downloadRequested.emit(year);
   }
+  /**
+ * Emette l'evento di richiesta download verso il componente padre
+ * @param filename Nome del file PDF da scaricare
+ */
   downloadReport(filename: string) {
     const url = `/assets/${filename}`;
     console.log('Download URL:', url);

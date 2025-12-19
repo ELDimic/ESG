@@ -10,14 +10,11 @@ import { ReportService, SustainabilityReport } from '../../services/report';
   styleUrls: ['./reports.css'],
 })
 export class Reports {
+  // Array dei report di sostenibilità disponibili
   reports: SustainabilityReport[];
 
   constructor(private reportService: ReportService) {
+    // Recupera i report dal servizio
     this.reports = this.reportService.getReports();
   }
-
-  onDownload(event: any): void {
-    console.log(event);
-  }
-
 }

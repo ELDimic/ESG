@@ -1,5 +1,7 @@
 <section aria-labelledby="reports-title">
   <h2 id="reports-title">Download report di sostenibilità</h2>
   <p>Seleziona un anno per scaricare il PDF.</p>
-  <app-report-list [reports]="reports" (downloadRequested)="onDownload($event)"></app-report-list>
+
+  <!-- Lista dei report-->
+  <app-report-list [reports]="reports"></app-report-list>
 </section>
