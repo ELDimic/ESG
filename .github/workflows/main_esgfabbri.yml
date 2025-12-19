@@ -1,4 +1,7 @@
-﻿name: Build and deploy Angular app to Azure Web App - ESGFabbri
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy ASP.Net Core app to Azure Web App - ESGFabbri
 
 on:
   push:
@@ -6,69 +9,47 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  AZURE_WEBAPP_NAME: esgfabbri     # <-- App Service
-  NODE_VERSION: '20'
-  APP_DIR: fabbri-esg              # <-- Cartella del progetto Angular
-
 jobs:
   build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.APP_DIR }}   # Tutti i comandi run dentro fabbri-esg
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json  # lock nella sottocartella
+          dotnet-version: '8.x'
 
-      - name: Show files (debug)
-        run: |
-          pwd
-          ls -la
-          echo "---- lock file ----"
-          ls -la package-lock.json
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
 
-      - name: Install dependencies
-        run: npm ci
+      - name: dotnet publish
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
 
-      - name: Build Angular (production)
-        run: npm run build -- --configuration production
-
-      - name: Detect build output folder
-        id: detect
-        shell: bash
-        run: |
-          echo "Dist content:"
-          ls -la dist
-          APP_BUILD_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
-          echo "APP_BUILD_DIR=$APP_BUILD_DIR" >> $GITHUB_OUTPUT
-
-      - name: Upload artifact
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: angular-build
-          path: ${{ env.APP_DIR }}/${{ steps.detect.outputs.APP_BUILD_DIR }}
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: build
+    
     steps:
-      - name: Download artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: angular-build
-          path: site
-
+          name: .net-app
+      
       - name: Deploy to Azure Web App
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: site
+          app-name: 'ESGFabbri'
+          slot-name: 'Production'
+          package: .
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_32EFDB906C4D46109F9B6C6A9E4B3DD8 }}
